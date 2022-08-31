@@ -4,32 +4,14 @@ class Blizzard:
         self.y = y
         self.f = f
         self.b = b
-        self.day = 0
 
-    def __repr__(self):
-        return (
-            f"{self.__class__.__name__}(x={self.x}, y={self.y}, f={self.f}, b={self.b})"
-        )
+    def __call__(self, x, y, day):
 
-    @property
-    def duration(self):
-        return self.day - self.b
-
-    def strength(self, distance):
-        if self.duration < 0:
-            # Blizzard haven't started
+        if day - self.b < 0:
             return 0
 
-        return max(self.f - self.duration - distance, 0)
-
-    def distance(self, x, y):
-        dx = abs(x - self.x)
-        dy = abs(y - self.y)
-
-        return dx + dy
-
-    def __call__(self, x, y):
-        return self.strength(self.distance(x, y))
+        distance = abs(x - self.x) + abs(y - self.y)
+        return max(self.f - day + self.b - distance, 0)
 
 
 class Cell:
@@ -41,10 +23,11 @@ class Cell:
     def __repr__(self):
         return f"{self.__class__.__name__}(x={self.x}, y={self.y})"
 
-    def forecast(self, blizzards):
+    def forecast(self, blizzards, day):
         self.snow_level = max(self.snow_level - 1, 0)
-        todays_contribution = sum([blizzard(self.x, self.y) for blizzard in blizzards])
-        self.snow_level += todays_contribution
+        self.snow_level += sum(
+            [blizzard(self.x, self.y, day) for blizzard in blizzards]
+        )
         return str(self.snow_level)
 
 
@@ -58,7 +41,5 @@ if __name__ == "__main__":
         blizzards.append(Blizzard(*map(int, input().strip().split(" "))))
 
     for day in range(1, D + 1):
-        for blizzard in blizzards:
-            blizzard.day = day
-        forecast = [c.forecast(blizzards) for c in cells_of_interest]
+        forecast = [c.forecast(blizzards, day) for c in cells_of_interest]
         print(" ".join(forecast))
